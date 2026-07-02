@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shivansh — Jack of All Trades, Mastering One Challenge at a Time</title>
+<meta name="description" content="Portfolio of Shivansh — Software Engineer working across Robotics, AI/ML, and Web Development.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0B0E14;
+    --bg-raised: #10141d;
+    --line: rgba(148,163,184,0.14);
+    --ink: #E7ECF3;
+    --ink-dim: #97A2B4;
+    --teal: #5EEAD4;
+    --amber: #F5A623;
+    --amber-dim: rgba(245,166,35,0.15);
+    --teal-dim: rgba(94,234,212,0.15);
+    --radius: 10px;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;} }
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--body);
+    line-height:1.6; overflow-x:hidden;
+  }
+  a{color:inherit; text-decoration:none;}
+  ::selection{background:var(--teal); color:#04110E;}
+  :focus-visible{outline:2px solid var(--teal); outline-offset:3px;}
+  img{max-width:100%; display:block;}
+
+  /* ---------- Loading screen ---------- */
+  #loader{
+    position:fixed; inset:0; background:var(--bg); z-index:9999;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px;
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #loader.hide{opacity:0; visibility:hidden; pointer-events:none;}
+  #loader svg{width:120px; height:120px;}
+  .loader-path{stroke:var(--teal); stroke-width:2; fill:none; stroke-dasharray:600; stroke-dashoffset:600; animation:draw 1.6s ease forwards;}
+  .loader-path.delay{animation-delay:.3s;}
+  @keyframes draw{to{stroke-dashoffset:0;}}
+  #loader-label{font-family:var(--mono); font-size:.72rem; letter-spacing:.18em; color:var(--ink-dim); text-transform:uppercase;}
+
+  /* ---------- Nav ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:500;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 5vw; backdrop-filter:blur(10px);
+    background:rgba(11,14,20,0.72); border-bottom:1px solid var(--line);
+  }
+  .logo{font-family:var(--mono); font-weight:500; font-size:1rem; letter-spacing:.02em;}
+  .logo span{color:var(--teal);}
+  nav ul{list-style:none; display:flex; gap:28px;}
+  nav a{font-size:.88rem; color:var(--ink-dim); transition:color .2s;}
+  nav a:hover{color:var(--ink);}
+  .nav-toggle{display:none; background:none; border:none; color:var(--ink); font-size:1.4rem; cursor:pointer;}
+  @media(max-width:800px){
+    nav ul{position:fixed; top:64px; right:0; height:calc(100vh - 64px); width:min(70vw,300px);
+      background:var(--bg-raised); flex-direction:column; padding:32px 28px; gap:22px;
+      transform:translateX(100%); transition:transform .35s ease; border-left:1px solid var(--line);}
+    nav ul.open{transform:translateX(0);}
+    .nav-toggle{display:block; margin-left: auto;}
+    header{display: flex; align-items: center; justify-content: space-between;}
+    .logo{margin-right: auto;}
+    nav{flex: 0;}
+  }
+
+  section{padding:120px 5vw; position:relative;}
+  .eyebrow{font-family:var(--mono); font-size:.74rem; letter-spacing:.2em; text-transform:uppercase; color:var(--teal); margin-bottom:14px; display:block;}
+  h2.section-title{font-family:var(--display); font-size:clamp(1.8rem,3.6vw,2.6rem); font-weight:600; margin-bottom:14px;}
+  .section-intro{color:var(--ink-dim); max-width:640px; margin-bottom:56px; font-size:1.02rem;}
+
+  /* ---------- Hero ---------- */
+  #hero{
+    min-height:100vh; display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+    padding-top:100px; position:relative; overflow:hidden;
+  }
+
+  #hero-canvas{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    display:block;
+    z-index:0;
+    opacity:.55;
+  }
+  .hero-content{
+    position:relative; z-index:2; max-width:1180px; width:100%;
+    display:grid; grid-template-columns:1.3fr .8fr; gap:48px; align-items:center;
+  }
+  @media(max-width:860px){
+    .hero-content{grid-template-columns:1fr; gap:36px;}
+    .face-wrap{order:-1; margin:0 auto;}
+  }
+  .hero-name{
+    font-family:var(--display); font-size:clamp(1.5rem,2.6vw,2.1rem); font-weight:600; color:var(--ink-dim);
+    letter-spacing:.01em; margin-bottom:10px; display:block;
+  }
+  .hero-name b{color:var(--ink); font-weight:700;}
+  .hero-kicker{font-family:var(--mono); color:var(--amber); font-size:1.05rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:22px; display:block;}
+
+  /* ---------- 3D face ---------- */
+  .face-wrap{
+    width:clamp(220px,40vw,320px); aspect-ratio:1/1; position:relative; justify-self:center;
+    border-radius:50%; overflow:hidden;
+    background:radial-gradient(
+            circle at center,
+            rgba(94,234,212,0.18) 0%,
+            rgba(94,234,212,0.10) 45%,
+            rgba(0,0,0,0) 90%
+        );
+    border:1px solid var(--line);
+  }
+  .face-wrap::after{
+    content:''; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    box-shadow:inset 0 0 40px rgba(94,234,212,0.15);
+  }
+  #faceCanvas{width:100%; height:100%; display:block; cursor:grab;}
+  .face-fallback{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;
+    font-size:2.4rem; text-align:center; color:var(--ink-dim);
+  }
+  .face-fallback span{font-family:var(--mono); font-size:.62rem; letter-spacing:.05em; max-width:170px; line-height:1.4;}
+  h1{
+    font-family:var(--display); font-weight:700; font-size:clamp(2.4rem,6vw,4.6rem); line-height:1.05; letter-spacing:-.01em;
+  }
+  h1 .accent{color:var(--teal);}
+  .hero-sub{margin-top:26px; font-size:1.15rem; color:var(--ink-dim); max-width:560px;}
+  .hero-ctas{display:flex; flex-wrap:wrap; gap:14px; margin-top:40px;}
+  .btn{
+    font-family:var(--body); font-weight:600; font-size:.92rem; padding:13px 24px; border-radius:8px;
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:1px solid transparent; transition:all .2s ease;
+  }
+  .btn-primary{background:var(--teal); color:#04120F;}
+  .btn-primary:hover{background:#7ff0dd; transform:translateY(-2px);}
+  .btn-outline{border-color:var(--line); color:var(--ink);}
+  .btn-outline:hover{border-color:var(--teal); color:var(--teal); transform:translateY(-2px);}
+
+  /* ---------- About ---------- */
+
+  /* ---------- Skills ---------- */
+  .skills-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px;}
+  .skill-card{
+    border:1px solid var(--line); border-radius:var(--radius); padding:22px; background:var(--bg-raised);
+    opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease, border-color .2s;
+  }
+  .skill-card.in-view{opacity:1; transform:translateY(0);}
+  .skill-card:hover{border-color:var(--teal);}
+  .skill-card .cat{font-family:var(--mono); font-size:.72rem; letter-spacing:.1em; color:var(--amber); text-transform:uppercase; margin-bottom:12px; display:block;}
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    font-family:var(--mono); font-size:.76rem; padding:5px 10px; border-radius:6px;
+    background:var(--teal-dim); color:var(--teal); border:1px solid rgba(94,234,212,.25);
+  }
+
+  /* ---------- Projects / Explorer ---------- */
+  .explorer-controls{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:38px; align-items:center;}
+  .explorer-controls input[type=text]{
+    background:var(--bg-raised); border:1px solid var(--line); color:var(--ink); padding:11px 14px;
+    border-radius:8px; font-family:var(--body); font-size:.9rem; min-width:220px; flex:1;
+  }
+  .filter-btn{
+    font-family:var(--mono); font-size:.76rem; padding:8px 14px; border-radius:20px; border:1px solid var(--line);
+    background:transparent; color:var(--ink-dim); cursor:pointer; transition:all .2s;
+  }
+  .filter-btn.active, .filter-btn:hover{border-color:var(--teal); color:var(--teal);}
+  select{background:var(--bg-raised); color:var(--ink); border:1px solid var(--line); padding:10px 12px; border-radius:8px; font-family:var(--body); font-size:.85rem;}
+
+  .project-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:22px;}
+
+  /* ---------- Blender horizontal scroller ---------- */
+  .blender-scroll-wrap{position:relative;}
+  .blender-scroll{
+    display:flex; gap:18px; overflow-x:auto; overflow-y:hidden; padding:6px 6px 22px 6px;
+    scroll-snap-type:x proximity; scrollbar-width:none; -ms-overflow-style:none;
+    -webkit-overflow-scrolling:touch;
+  }
+  .blender-scroll::-webkit-scrollbar{display:none;}
+  .blender-scroll .project-card{
+    flex:0 0 auto; width:260px; scroll-snap-align:start; cursor:default;
+  }
+  .blender-scroll-wrap::before, .blender-scroll-wrap::after{
+    content:''; position:absolute; top:0; bottom:22px; width:56px; pointer-events:none; z-index:2;
+  }
+  .blender-scroll-wrap::before{ left:0; background:linear-gradient(90deg, var(--bg) 0%, transparent 100%);}
+  .blender-scroll-wrap::after{ right:0; background:linear-gradient(270deg, var(--bg) 0%, transparent 100%);}
+  .scroll-arrows{display:flex; gap:10px; margin-top:16px;}
+  .scroll-arrow{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--bg-raised);
+    color:var(--ink-dim); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-size:1rem; transition:border-color .2s, color .2s;
+  }
+  .scroll-arrow:hover{border-color:var(--teal); color:var(--teal);}
+  @media(max-width:600px){ .blender-scroll-wrap::before, .blender-scroll-wrap::after{ display:none; } }
+  .project-card{
+    border:1px solid var(--line); border-radius:var(--radius); background:var(--bg-raised); overflow:hidden;
+    cursor:pointer; transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    display:flex; flex-direction:column;
+  }
+  .project-card:hover{transform:translateY(-5px); border-color:var(--teal); box-shadow:0 18px 40px -20px rgba(94,234,212,.25);}
+  .project-thumb{
+    height:210px; position:relative; display:flex; align-items:center; justify-content:center;
+    font-size:2rem; overflow:hidden; background:
+      repeating-linear-gradient(45deg, rgba(94,234,212,0.06) 0 2px, transparent 2px 18px),
+      linear-gradient(135deg, #131a26, #0d1119);
+    border-bottom:1px solid var(--line);
+  }
+  .project-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  /* Image-only Blender gallery cards — no title/description below */
+  .blender-card{display:block;}
+  .blender-thumb{height:285px; border-bottom:none;}
+  .thumb-fallback{width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:2.2rem;}
+  .project-body{padding:20px; display:flex; flex-direction:column; gap:10px; flex:1;}
+  .project-cat{font-family:var(--mono); font-size:.68rem; color:var(--amber); letter-spacing:.1em; text-transform:uppercase;}
+  .project-title{font-family:var(--display); font-size:1.12rem; font-weight:600;}
+  .project-desc{color:var(--ink-dim); font-size:.88rem; flex:1;}
+  .project-tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;}
+  .tag-sm{font-family:var(--mono); font-size:.68rem; padding:3px 8px; border-radius:5px; background:var(--amber-dim); color:var(--amber);}
+  .project-links{display:flex; gap:10px; margin-top:8px; font-size:.8rem;}
+  .project-links a{color:var(--ink-dim); border-bottom:1px dashed var(--line); padding-bottom:1px;}
+  .project-links a:hover{color:var(--teal); border-color:var(--teal);}
+  .no-results{color:var(--ink-dim); font-family:var(--mono); font-size:.85rem; padding:40px 0;}
+
+  /* modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(4,6,10,.78); backdrop-filter:blur(4px); z-index:800;
+    display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:var(--bg-raised); border:1px solid var(--line); border-radius:14px; max-width:640px; width:100%;
+    max-height:85vh; overflow-y:auto; padding:32px;
+  }
+  .modal-close{float:right; background:none; border:none; color:var(--ink-dim); font-size:1.3rem; cursor:pointer;}
+  .modal h3{font-family:var(--display); font-size:1.4rem; margin-bottom:6px;}
+  .modal .project-cat{margin-bottom:14px; display:block;}
+  .modal ul{margin:14px 0 0 18px; color:var(--ink-dim); font-size:.92rem;}
+  .modal li{margin-bottom:8px;}
+
+  /* ---------- Contact ---------- */
+  .contact-wrap{display:block;}
+  .contact-links{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media(max-width:600px){.contact-links{grid-template-columns:1fr;}}
+  .contact-link{
+    display:flex; align-items:center; gap:12px; padding:14px 16px; border:1px solid var(--line); border-radius:8px;
+    background:var(--bg-raised); transition:border-color .2s, transform .2s;
+  }
+  .contact-link:hover{border-color:var(--teal); transform:translateX(4px);}
+  ::placeholder{color:#5c6577;}
+
+  footer{padding:36px 5vw; border-top:1px solid var(--line); display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px;
+    font-family:var(--mono); font-size:.76rem; color:var(--ink-dim);}
+
+  /* pickaxe cursor easter egg */
+  .pickaxe-cursor{cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><path d="M2 20 L11 11" stroke="%23c9902f" stroke-width="2"/><path d="M9 3c3 0 7 2 9 6-4 1-7 0-9-3-2 3-5 4-9 3 2-4 6-6 9-6z" fill="%23b0b0b0" stroke="%23444" stroke-width="1"/></svg>') 4 20, pointer;}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <svg viewBox="0 0 120 120">
+    <path class="loader-path" d="M20 60 H45 M45 60 L55 40 M55 40 H80 M80 40 V60 H100" />
+    <path class="loader-path delay" d="M20 80 H35 M35 80 L45 95 H75 L85 80 H100" />
+  </svg>
+  <span id="loader-label">assembling // shivansh.dev</span>
+</div>
+
+<header>
+  <a href="#hero" class="logo">S<span>_</span>DEV</a>
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+  <nav>
+    <ul id="navList">
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projects">Projects</a></li>
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- ================= HERO ================= -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-text">
+      <span class="hero-name"><b>Shivansh Singhania</b></span>
+      <span class="hero-kicker">Software Engineer</span>
+      <h1>Jack of all trades,<br>mastering <span class="accent">one challenge</span> at a time.</h1>
+      <p class="hero-sub">I build across AI/ML, robotics, and the web—not because I can't commit to a stack, but because every new domain teaches me something the last one couldn't. Currently immersed in deep learning and AI agents, with a soft spot for robots and whatever breaks next.</p>
+      <div class="hero-ctas">
+        <a href="#projects" class="btn btn-primary">View Projects</a>
+        <a href="https://github.com/Singhania2004" target="_blank" rel="noopener" class="btn btn-outline">GitHub</a>
+        <a href="https://drive.google.com/file/d/1veSBmEZobQab88mmSAXx0NammUrheBLh/view?usp=sharing" class="btn btn-outline">Resume</a>
+        <a href="#contact" class="btn btn-outline">Contact</a>
+      </div>
+    </div>
+    <div class="face-wrap" id="faceWrap">
+      <canvas id="faceCanvas"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SKILLS ================= -->
+<section id="skills">
+  <span class="eyebrow">01 — Skills</span>
+  <h2 class="section-title">Tools of the trade(s)</h2>
+  <p class="section-intro">A working toolkit spanning perception, control, learning, and the web — picked up by building, not by tutorial.</p>
+  <div class="skills-grid" id="skillsGrid">
+    <div class="skill-card"><span class="cat">🧠 AI &amp; ML</span><div class="chip-row">
+      <span class="chip">PyTorch</span><span class="chip">CNNs</span><span class="chip">RNNs</span><span class="chip">RAG</span><span class="chip">LangChain</span><span class="chip">LangGraph</span>
+    </div></div>
+    <div class="skill-card"><span class="cat">🤖 Robotics</span><div class="chip-row">
+      <span class="chip">ROS 2</span><span class="chip">micro-ROS</span><span class="chip">Gazebo</span><span class="chip">RViz</span><span class="chip">Nav2</span><span class="chip">Control Systems</span>
+    </div></div>
+    <div class="skill-card"><span class="cat">🌐 Web Development</span><div class="chip-row">
+      <span class="chip">Node.js</span><span class="chip">Express.js</span><span class="chip">Flask</span><span class="chip">Vanilla JS</span><span class="chip">jQuery</span>
+    </div></div>
+    <div class="skill-card"><span class="cat">💻 Languages</span><div class="chip-row">
+      <span class="chip">Python</span><span class="chip">C++</span><span class="chip">C</span><span class="chip">JavaScript</span><span class="chip">SQL</span>
+    </div></div>
+    <div class="skill-card"><span class="cat">🛠️ Tools</span><div class="chip-row">
+      <span class="chip">Git</span><span class="chip">Docker</span><span class="chip">Fusion360</span><span class="chip">Blender</span><span class="chip">Arduino</span>
+    </div></div>
+    <div class="skill-card"><span class="cat">📡 IoT &amp; Vision</span><div class="chip-row">
+      <span class="chip">Unity</span><span class="chip">Computer Vision</span><span class="chip">MQTT</span><span class="chip">YOLOv8</span><span class="chip">OpenCV</span>
+    </div></div>
+  </div>
+</section>
+
+<!-- ================= PROJECTS / EXPLORER ================= -->
+<section id="projects" style="padding-top:20px;">
+  <span class="eyebrow">02 — Featured Work</span>
+  <h2 class="section-title">Project Explorer</h2>
+  <p class="section-intro">Search, filter, or just browse — every project here was built end-to-end, warts and all.</p>
+
+  <div class="explorer-controls">
+    <input type="text" id="searchInput" placeholder="Search projects, tech, keywords…">
+    <select id="sortSelect">
+      <option value="default">Sort: Featured</option>
+      <option value="title">Sort: A–Z</option>
+    </select>
+  </div>
+  <div class="explorer-controls" id="filterRow">
+    <button class="filter-btn active" data-cat="all">All</button>
+    <button class="filter-btn" data-cat="Robotics">🤖 Robotics</button>
+    <button class="filter-btn" data-cat="AI & ML">🧠 AI &amp; ML</button>
+    <button class="filter-btn" data-cat="Unity / AR">🎮 Unity / AR</button>
+    <button class="filter-btn" data-cat="Web Dev">🌐 Web Dev</button>
+  </div>
+
+  <div class="project-grid" id="projectGrid"></div>
+  <p class="no-results" id="noResults" style="display:none;">No projects match that search — try a different term.</p>
+</section>
+
+<!-- ================= BLENDER STRIP ================= -->
+<section id="blender" style="padding-top:0;">
+  <span class="eyebrow">03 — 3D &amp; Blender</span>
+  <h2 class="section-title">Modeling experiments</h2>
+  <p class="section-intro">Blender is where I build for fun. From stylized characters to simple props, I enjoy experimenting with hard-surface and polygon modeling, with the occasional sculpting session as I continue exploring different workflows and rendering styles.</p>
+  <div class="blender-scroll-wrap">
+    <div class="blender-scroll" id="blenderGrid"></div>
+  </div>
+  <div class="scroll-arrows">
+    <button class="scroll-arrow" id="blenderPrev" aria-label="Scroll left">←</button>
+    <button class="scroll-arrow" id="blenderNext" aria-label="Scroll right">→</button>
+  </div>
+</section>
+
+<!-- ================= EXPERIENCE ================= -->
+<section id="experience" style="padding-top:0; padding-bottom:120px;">
+  <span class="eyebrow">04 — Experience</span>
+  <h2 class="section-title">Work &amp; recognition</h2>
+  <div class="skill-card" style="max-width:760px;">
+    <span class="cat">Jan 2026 – Mar 2026</span>
+    <h3 style="font-family:var(--display); font-size:1.15rem; margin:6px 0 14px;">Robotics &amp; IoT Intern — RIKA India</h3>
+    <ul style="margin-left:18px; color:var(--ink-dim); font-size:.92rem; display:flex; flex-direction:column; gap:8px;">
+      <li>Engineered a head stabilization controller for a snake robot using PID, resolving oscillations via nested control redesign.</li>
+      <li>Built a distributed control pipeline with ROS 2 + micro-ROS across Raspberry Pi 5, a servo driver, and ESP32 for real-time actuation.</li>
+      <li>Deployed a real-time edge vision pipeline on Raspberry Pi 5 (libcamera + GStreamer → OpenCV) running optimized YOLOv8 inference.</li>
+      <li>Developed a scalable IoT smart manhole monitoring system using ESP32 + multi-sensor fusion over MQTT.</li>
+      <li>Built a real-time webapp with Node.js/Express, live SSE data streaming, and geospatial visualization via Leaflet + Three.js.</li>
+    </ul>
+  </div>
+  <div class="skill-card" style="max-width:760px; margin-top:22px;">
+    <span class="cat">2026</span>
+    <h3 style="font-family:var(--display); font-size:1.15rem; margin:6px 0 10px;">🏆 eYSIP 2026 — IIT Bombay (via e-Yantra Robotics Competition)</h3>
+    <p style="color:var(--ink-dim); font-size:.92rem;">Selected for the e-Yantra Summer Internship Program at IIT Bombay, recognizing top-performing participants of the e-Yantra Robotics Competition. Had to decline the offer due to a clash with final examinations and logistics constraints.</p>
+    <a href="https://drive.google.com/drive/folders/1yy3ZgV6BDTeH9rNayfmj_Ktnnc-rdZdP?usp=sharing" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:14px;">View Selection Letter ↗</a>
+  </div>
+  <div class="chip-row" style="margin-top:18px;">
+    <span class="chip">⚙️ A.T.O.M Robotics Lab — Technical Team Member, Oct 2024–present</span>
+  </div>
+</section>
+
+<!-- ================= CONTACT ================= -->
+<section id="contact" style="padding-top:30px;">
+  <span class="eyebrow">05 — Contact</span>
+  <h2 class="section-title">Let's build something</h2>
+  <div class="contact-wrap">
+    <div class="contact-links">
+      <a class="contact-link" href="mailto:shivansh22rdps@gmail.com">✉️ &nbsp; shivansh22rdps@gmail.com</a>
+      <a class="contact-link" href="https://www.linkedin.com/in/shivansh-singhania-468516227/" target="_blank" rel="noopener">💼 &nbsp; LinkedIn</a>
+      <a class="contact-link" href="https://github.com/Singhania2004" target="_blank" rel="noopener">🐙 &nbsp; GitHub</a>
+      <a class="contact-link" href="https://drive.google.com/file/d/1veSBmEZobQab88mmSAXx0NammUrheBLh/view?usp=sharing">📄 &nbsp; Download Resume</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Shivansh. All rights reserved.</span>
+</footer>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+/* ============ Loader ============ */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 1400);
+});
+
+/* ============ Nav toggle ============ */
+const navToggle = document.getElementById('navToggle');
+const navList = document.getElementById('navList');
+navToggle.addEventListener('click', () => navList.classList.toggle('open'));
+navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navList.classList.remove('open')));
+
+/* ============ Hero constellation canvas ============ */
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,nodes=[];
+function resize(){
+  W = canvas.width = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+}
+function initNodes(){
+  nodes = [];
+  const count = Math.min(90, Math.floor((W*H)/26000));
+  for(let i=0;i<count;i++){
+    nodes.push({
+      x: Math.random()*W, y: Math.random()*H,
+      vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.25,
+      r: Math.random()*1.6+0.6
+    });
+  }
+}
+function tick(){
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = 'rgba(94,234,212,0.12)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<nodes.length;i++){
+    const a = nodes[i];
+    a.x += a.vx; a.y += a.vy;
+    if(a.x<0||a.x>W) a.vx*=-1;
+    if(a.y<0||a.y>H) a.vy*=-1;
+    for(let j=i+1;j<nodes.length;j++){
+      const b = nodes[j];
+      const d = Math.hypot(a.x-b.x, a.y-b.y);
+      if(d < 130){
+        ctx.globalAlpha = 1 - d/130;
+        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = 'rgba(94,234,212,0.55)';
+  nodes.forEach(n => { ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); });
+  requestAnimationFrame(tick);
+}
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+window.addEventListener('resize', () => { resize(); initNodes(); });
+resize(); initNodes();
+if(!reduceMotion) tick(); else tick(); // draw once even w/ reduced motion (single frame acceptable)
+
+/* ============ Skill card reveal ============ */
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target);} });
+},{threshold:0.15});
+document.querySelectorAll('.skill-card').forEach(c => io.observe(c));
+
+/* ============ Project data ============ */
+const projects = [
+  {
+    title:"Single-View 3D Voxel Reconstruction", cat:"AI & ML", icon:"🧠", year:2026,
+    img:"assets/projects/voxel-reconstruction.png",
+    desc:"Reconstructs 32³ voxel grids from a single 2D image using a hybrid ResNet + 3D-CNN architecture.",
+    tech:["PyTorch","Torchvision","Flask","Three.js","ShapeNet"],
+    achievements:["Achieved ~52% IoU on ShapeNet (chairs) with a ResNet encoder – 3D CNN decoder.","Designed a feature-guided refinement mechanism improving structural accuracy.","Built an end-to-end pipeline with a Flask + Three.js web app for live 3D inference."],
+    github:"https://github.com/Singhania2004/Shapenet_2d_to_voxels_cnn", demo:null, featured:true
+  },
+  {
+    title:"AI Codebase Assistant", cat:"AI & ML", icon:"💬", year:2026,
+    img:"assets/projects/ai-codebase-assistant.png",
+    desc:"Hybrid RAG pipeline that answers natural-language questions over any Python GitHub repo.",
+    tech:["Groq (Llama 3.3 70B)","ChromaDB","Sentence Transformers","NetworkX","Streamlit"],
+    achievements:["Combined semantic vector search with AST-based dependency graph traversal.","Built a query-rewriting module to expand questions into code-domain terminology.","Deployed a multi-turn conversational interface with rolling chat history and per-repo vector storage."],
+    github:"https://github.com/Singhania2004/repo_codebase_ai", demo:"https://repocodebaseai.streamlit.app/", featured:true
+  },
+  {
+    title:"Fleet Management System (Open-RMF)", cat:"Robotics", icon:"🤖", year:2025,
+    img:"assets/projects/open-rmf-fleet.png",
+    desc:"Simulated and coordinated multiple autonomous robots in a shared environment using Open-RMF.",
+    tech:["ROS 2","Open-RMF","Gazebo","RViz"],
+    achievements:["Configured fleet adapters, traffic management, and task scheduling for multi-robot navigation.","Enabled collaborative task execution across simulated robot fleets."],
+    github:"https://github.com/Singhania2004/FMS", demo:"https://drive.google.com/drive/folders/1LxE9dAXZH7Q5AnIaVe6kMambS0yjo9a6?usp=sharing", featured:true
+  },
+  {
+    title:"Visual SLAM &amp; Navigation (RTAB-Map)", cat:"Robotics", icon:"🗺️", year:2025,
+    img:"assets/projects/rtab-map-slam.png",
+    desc:"Dense 3D point-cloud mapping and localization for indoor autonomous navigation.",
+    tech:["ROS 2","RTAB-Map","Nav2","Gazebo","RViz"],
+    achievements:["Generated dense 3D point clouds of indoor environments for mapping.","Converted PointCloud2 data into 2D costmaps for real-time path planning via Nav2."],
+    github:"https://github.com/Singhania2004/Rtab_map", demo:"https://drive.google.com/drive/folders/1s2TVNS_hULiRYCejbH2LmOytm1_UpjP9?usp=sharing", featured:true
+  },
+  {
+    title:"Krishi Drone — Autonomous Ag Drone", cat:"Robotics", icon:"🌾", year:2025,
+    img:"assets/projects/krishi-drone.jpeg",
+    desc:"Autonomous agricultural drone for e-Yantra 2025–26, combining flight control with crop-health vision.",
+    tech:["Control Systems","Computer Vision","Betaflight"],
+    achievements:["Tuned PID controllers and filtering for stable, precise simulated flight.","Built waypoint-based autonomous navigation with optimized path following.","Integrated a CV pipeline to detect and classify infected plants from live camera feeds."],
+    github:null, demo:"https://drive.google.com/drive/folders/1q1QmJKwE3noS07ZdvsY8IPq86MOTvkf6?usp=sharing", featured:true
+  },
+  {
+    title:"Indoor Navigation using SLAM", cat:"Robotics", icon:"📡", year:2025,
+    img:"assets/projects/indoor-slam.png",
+    desc:"LiDAR + IMU sensor fusion for accurate localization and mapping indoors.",
+    tech:["ROS 2","Gazebo","RViz","Nav2","SLAM Toolbox"],
+    achievements:["Fused LiDAR and IMU data for accurate indoor localization.","Tuned Nav2 parameters for path planning and obstacle avoidance in complex spaces."],
+    github:"https://github.com/Singhania2004/Gps-nav2", demo:"https://drive.google.com/drive/folders/1e_USVIS39S53jhTWCX10rkgOOnjSIsQE?usp=sharing", featured:false
+  },
+  {
+    title:"ARtifact — AR for Indian Heritage", cat:"Unity / AR", icon:"🏛️", year:2025,
+    img:"assets/projects/artifact-ar.png",
+    desc:"Gamified AR experience pairing an RC car with virtual monuments to celebrate Indian heritage.",
+    tech:["Unity","Vuforia","C#","AR Foundation"],
+    achievements:["Integrated an RC car with a Unity AR app using Vuforia marker detection.","Triggered virtual monuments to appear as the car physically traversed marked terrain."],
+    github:null, demo:"https://drive.google.com/drive/folders/1iR_53QuYXNo6YVW3eRB_V0DND_53cKTx?usp=sharing", featured:false
+  },
+  {
+    title:"Website 1 — Favorites List", cat:"Web Dev", icon:"📚", year:2023,
+    img:"assets/projects/website-1.png",
+    desc:"First-ever project: a simple page listing favorite books, anime, and movies.",
+    tech:["HTML","CSS","Vanilla JS"],
+    achievements:["Independently hand-coded every line as a first test of web fundamentals."],
+    github:"https://github.com/Singhania2004/Website_1", demo:"https://singhania2004.github.io/Website_1/index.html", featured:false
+  },
+  {
+    title:"Snakes &amp; Ladders", cat:"Web Dev", icon:"🎲", year:2024,
+    img:"assets/projects/snakes-ladders.png",
+    desc:"Client-side 2–3 player Snakes & Ladders game with full gameplay logic.",
+    tech:["HTML","CSS Grid","JavaScript","jQuery"],
+    achievements:["Implemented dice rolls, extra turns, jumps, and win detection.","Built dynamic piece movement via DOM manipulation with custom board/dice assets."],
+    github:"https://github.com/Singhania2004/Snakes-Ladders", demo:"https://singhania2004.github.io/Snakes-Ladders/", featured:false
+  },
+  {
+    title:"Color Notes", cat:"Web Dev", icon:"🗒️", year:2024,
+    img:"assets/projects/color-notes.png",
+    desc:"Color-coded notes app with theming and persistent storage.",
+    tech:["HTML","CSS","JavaScript","jQuery"],
+    achievements:["Built modular ES6 classes (ColorNote, Storage, UI) for clean separation of concerns.","Implemented dark/light mode, 3 design themes, and real-time search filtering."],
+    github:"https://github.com/Singhania2004/Color-notes", demo:"https://singhania2004.github.io/Color-notes/", featured:false
+  },
+  {
+    title:"Hospital Discovery Portal", cat:"Web Dev", icon:"🏥", year:2024,
+    img:"assets/projects/hospital-portal.png",
+    desc:"Interactive map surfacing live hospital bed availability across a city.",
+    tech:["Leaflet.js","JavaScript","JSON"],
+    achievements:["Displayed 18+ hospitals on an interactive map with real-time geolocation.","Rendered live bed availability (critical/non-critical, with/without ventilators) from JSON sources."],
+    github:"https://github.com/Singhania2004/Hospital_management", demo:"https://singhania2004.github.io/Hospital_management/", featured:false
+  }
+];
+
+const grid = document.getElementById('projectGrid');
+const noResults = document.getElementById('noResults');
+
+function cardHTML(p, idx){
+  return `<article class="project-card" data-idx="${idx}">
+    <div class="project-thumb">
+      ${p.img ? `<img src="${p.img}" alt="${p.title} screenshot" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : ''}
+      <div class="thumb-fallback" style="${p.img ? 'display:none;' : 'display:flex;'}">${p.icon}</div>
+    </div>
+    <div class="project-body">
+      <span class="project-cat">${p.cat}</span>
+      <h3 class="project-title">${p.title}</h3>
+      <p class="project-desc">${p.desc}</p>
+      <div class="project-tags">${p.tech.slice(0,4).map(t=>`<span class="tag-sm">${t}</span>`).join('')}</div>
+      <div class="project-links">
+        ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener" onclick="event.stopPropagation()">GitHub ↗</a>` : ''}
+        ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Demo ↗</a>` : ''}
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderProjects(list){
+  grid.innerHTML = list.map(({p,idx}) => cardHTML(p,idx)).join('');
+  noResults.style.display = list.length ? 'none' : 'block';
+  grid.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('click', () => openModal(projects[card.dataset.idx]));
+  });
+}
+
+let activeCat = 'all';
+function applyFilters(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sort = document.getElementById('sortSelect').value;
+  let list = projects.map((p,idx)=>({p,idx})).filter(({p}) => {
+    const inCat = activeCat === 'all' || p.cat === activeCat;
+    const hay = (p.title + ' ' + p.desc + ' ' + p.tech.join(' ') + ' ' + p.cat).toLowerCase();
+    const inSearch = !q || hay.includes(q);
+    return inCat && inSearch;
+  });
+  if(sort === 'title') list.sort((a,b)=>a.p.title.localeCompare(b.p.title));
+  // 'default' keeps the array's own order (AI & ML → Robotics → Unity/AR → Web Dev)
+  renderProjects(list);
+}
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+document.getElementById('sortSelect').addEventListener('change', applyFilters);
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); activeCat = btn.dataset.cat; applyFilters();
+  });
+});
+applyFilters();
+
+/* ============ Modal ============ */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalContent = document.getElementById('modalContent');
+function openModal(p){
+  modalContent.innerHTML = `
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">×</button>
+    ${p.img ? `<div class="project-thumb" style="border-radius:8px; margin-bottom:16px;"><img src="${p.img}" alt="${p.title} screenshot" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="thumb-fallback" style="display:none;">${p.icon}</div></div>` : ''}
+    <span class="project-cat">${p.icon} ${p.cat} · ${p.year}</span>
+    <h3>${p.title}</h3>
+    <p style="color:var(--ink-dim); margin-top:10px;">${p.desc}</p>
+    <div class="project-tags" style="margin-top:14px;">${p.tech.map(t=>`<span class="tag-sm">${t}</span>`).join('')}</div>
+    <ul>${p.achievements.map(a=>`<li>${a}</li>`).join('')}</ul>
+    <div class="project-links" style="margin-top:20px;">
+      ${p.github ? `<a href="${p.github}" target="_blank" rel="noopener" class="btn btn-outline">GitHub ↗</a>` : ''}
+      ${p.demo ? `<a href="${p.demo}" target="_blank" rel="noopener" class="btn btn-outline">Demo ↗</a>` : ''}
+    </div>`;
+  modalBackdrop.classList.add('open');
+}
+function closeModal(){ modalBackdrop.classList.remove('open'); }
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) closeModal(); });
+document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeModal(); });
+
+/* ============ Blender gallery — image only, no text (infinite loop) ============ */
+const blenderGrid = document.getElementById('blenderGrid');
+// Add/remove image paths here. Put the actual image files in assets/models/
+const blenderImages = [
+  "assets/models/model-01.jpeg",
+  "assets/models/model-02.jpeg",
+  "assets/models/model-03.jpeg",
+  "assets/models/model-04.jpeg",
+  "assets/models/model-05.jpeg",
+  "assets/models/model-06.jpeg",
+  "assets/models/model-07.jpeg",
+  "assets/models/model-08.jpeg",
+  "assets/models/model-09.jpeg",
+  "assets/models/model-10.jpeg"
+];
+const blenderCard = (src,i) => `
+  <article class="project-card blender-card" style="cursor:default;">
+    <div class="project-thumb blender-thumb">
+      <img src="${src}" alt="Blender model ${i+1}" loading="lazy"
+           onerror="this.style.display='none'; this.parentElement.innerHTML='🗿';">
+    </div>
+  </article>`;
+// Render 3 copies back-to-back so scrolling in either direction always has more cards ahead of it
+const oneSetHTML = blenderImages.map(blenderCard).join('');
+blenderGrid.innerHTML = oneSetHTML + oneSetHTML + oneSetHTML;
+
+/* ============ Blender scroll arrows + infinite loop ============ */
+const blenderScrollEl = document.getElementById('blenderGrid');
+const scrollAmount = 260;
+let blenderSetWidth = 0;
+
+function measureBlenderSet(){
+  blenderSetWidth = blenderScrollEl.scrollWidth / 3;
+  // Start the viewport in the middle copy so there's room to wrap both ways
+  blenderScrollEl.scrollLeft = blenderSetWidth;
+}
+requestAnimationFrame(measureBlenderSet);
+window.addEventListener('resize', measureBlenderSet);
+
+let blenderTicking = false;
+blenderScrollEl.addEventListener('scroll', () => {
+  if(blenderTicking) return;
+  blenderTicking = true;
+  requestAnimationFrame(() => {
+    if(blenderSetWidth > 0){
+      if(blenderScrollEl.scrollLeft <= 4){
+        blenderScrollEl.scrollLeft += blenderSetWidth;
+      } else if(blenderScrollEl.scrollLeft >= blenderSetWidth * 2 - 4){
+        blenderScrollEl.scrollLeft -= blenderSetWidth;
+      }
+    }
+    blenderTicking = false;
+  });
+}, { passive:true });
+
+document.getElementById('blenderPrev').addEventListener('click', () => {
+  blenderScrollEl.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+});
+document.getElementById('blenderNext').addEventListener('click', () => {
+  blenderScrollEl.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+});
+
+/* ============ Pickaxe cursor easter egg on Robotics filter ============ */
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  if(btn.dataset.cat === 'Robotics'){
+    btn.addEventListener('mouseenter', ()=> document.body.classList.add('pickaxe-cursor'));
+    btn.addEventListener('mouseleave', ()=> document.body.classList.remove('pickaxe-cursor'));
+  }
+});
+
+/* ============ 3D Face — follows mouse on desktop, scroll on mobile ============ */
+(function initFace(){
+  const wrap = document.getElementById('faceWrap');
+  const canvas = document.getElementById('faceCanvas');
+  const isCoarse = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 800;
+  const reduceMotion2 = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Path to your exported model. Put the file at this location relative to index.html.
+  const MODEL_PATH = 'assets/face.glb';
+
+  if(typeof THREE === 'undefined'){ showFallback('3D engine failed to load.'); return; }
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.physicallyCorrectLights = true;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+  camera.position.set(0, 0, 4);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const key = new THREE.DirectionalLight(0x9be8db, 1.1);
+  key.position.set(2, 2, 3);
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0xf5a623, 0.5);
+  rim.position.set(-2, 1, -2);
+  scene.add(rim);
+
+  let head = null;
+  let targetX = 0, targetY = 0, curX = 0, curY = 0;
+  const MAX_YAW = 1.0;   // left/right (radians)
+  const MAX_PITCH = 0.6; // up/down (radians)
+
+  function sizeCanvas(){
+    const s = wrap.clientWidth;
+    renderer.setSize(s, s, false);
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', sizeCanvas);
+
+  function showFallback(msg){
+    wrap.innerHTML = `<div class="face-fallback">🙂<span>${msg || 'Add your face.glb to /assets to show your 3D model here.'}</span></div>`;
+  }
+
+  const loader = new THREE.GLTFLoader();
+  loader.load(
+    MODEL_PATH,
+    (gltf) => {
+      head = gltf.scene;
+      // Center & normalize scale so the model frames nicely regardless of export scale
+      const box = new THREE.Box3().setFromObject(head);
+      const size = new THREE.Vector3(); box.getSize(size);
+      const center = new THREE.Vector3(); box.getCenter(center);
+      head.position.sub(center);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      head.scale.setScalar(2.1 / maxDim);
+      head.position.set(0.0, -1.0, 0.0);
+      scene.add(head);
+      sizeCanvas();
+      animate();
+    },
+    undefined,
+    () => { showFallback(); } // no model found yet — friendly placeholder instead of a broken canvas
+  );
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(!head) return;
+    curX += (targetX - curX) * 0.23;
+    curY += (targetY - curY) * 0.23;
+    head.rotation.y = curX;
+    head.rotation.x = curY;
+    renderer.render(scene, camera);
+  }
+
+  if(!isCoarse){
+    // Desktop: face yaw follows horizontal mouse position, pitch follows vertical
+    window.addEventListener('mousemove', (e) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) .. 1 (right)
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;  // -1 (top) .. 1 (bottom)
+      targetX = nx * MAX_YAW;
+      targetY = ny * MAX_PITCH;
+    });
+  } else {
+    // Mobile: no reliable mouse — tilt the face up/down as the hero section scrolls past
+    const heroEl = document.getElementById('hero');
+    window.addEventListener('scroll', () => {
+      const rect = heroEl.getBoundingClientRect();
+      const progress = Math.min(Math.max(-rect.top / (rect.height * 0.6), -1), 1);
+      targetY = progress * MAX_PITCH * 2.0;
+      targetX = 0;
+    }, { passive:true });
+  }
+
+  if(reduceMotion2){ targetX = 0; targetY = 0; }
+  sizeCanvas();
+})();
+</script>
+</body>
+</html>

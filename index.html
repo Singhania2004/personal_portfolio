@@ -55,6 +55,11 @@
     padding:18px 5vw; backdrop-filter:blur(10px);
     background:rgba(11,14,20,0.72); border-bottom:1px solid var(--line);
   }
+  /* Mobile: backdrop-filter is a major scroll-jank source on phones (recomputed every frame
+     under a fixed, blurred element). Swap to a cheap solid background instead. */
+  @media(max-width:800px){
+    header{ backdrop-filter:none; background:rgba(9,11,17,0.94); }
+  }
   .logo{font-family:var(--mono); font-weight:500; font-size:1rem; letter-spacing:.02em;}
   .logo span{color:var(--teal);}
   nav ul{list-style:none; display:flex; gap:28px;}
@@ -93,6 +98,17 @@
     z-index:0;
     opacity:.55;
   }
+  /* Mobile: the constellation canvas runs an O(n^2) animation loop every frame forever —
+     a heavy, continuous CPU cost that fights the scroll thread on phones. We disable it in JS
+     (see below) and swap in this static, zero-cost glow so the hero doesn't look bare. */
+  @media(max-width:800px){
+    #hero-canvas{display:none;}
+    #hero::before{
+      content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+      background:radial-gradient(circle at 30% 20%, rgba(94,234,212,0.10) 0%, transparent 55%),
+                 radial-gradient(circle at 80% 70%, rgba(245,166,35,0.06) 0%, transparent 50%);
+    }
+  }
   .hero-content{
     position:relative; z-index:2; max-width:1180px; width:100%;
     display:grid; grid-template-columns:1.3fr .8fr; gap:48px; align-items:center;
@@ -125,6 +141,13 @@
     box-shadow:inset 0 0 40px rgba(94,234,212,0.15);
   }
   #faceCanvas{width:100%; height:100%; display:block; cursor:grab;}
+  .face-img-mobile{width:100%; height:100%; object-fit:cover; display:none;}
+  /* Mobile: skip loading Three.js + the .glb model entirely (heavy download, WebGL context,
+     and a continuous render loop) and show a plain static image instead. */
+  @media(max-width:800px){
+    #faceCanvas{display:none;}
+    .face-img-mobile{display:block;}
+  }
   .face-fallback{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;
     font-size:2.4rem; text-align:center; color:var(--ink-dim);
@@ -236,6 +259,7 @@
     display:none; align-items:center; justify-content:center; padding:24px;
   }
   .modal-backdrop.open{display:flex;}
+  @media(max-width:800px){ .modal-backdrop{ backdrop-filter:none; background:rgba(4,6,10,.92); } }
   .modal{
     background:var(--bg-raised); border:1px solid var(--line); border-radius:14px; max-width:640px; width:100%;
     max-height:85vh; overflow-y:auto; padding:32px;
@@ -305,6 +329,7 @@
     </div>
     <div class="face-wrap" id="faceWrap">
       <canvas id="faceCanvas"></canvas>
+      <img id="faceImgMobile" class="face-img-mobile" src="assets/projects/me.png" alt="Shivansh Singhania" loading="eager" decoding="async">
     </div>
   </div>
 </section>
@@ -423,13 +448,17 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 /* ============ Loader ============ */
 window.addEventListener('load', () => {
   setTimeout(() => document.getElementById('loader').classList.add('hide'), 1400);
 });
+
+/* ============ Mobile detection (shared) ============ */
+// Same 800px breakpoint the layout already uses. On mobile we skip the constellation
+// animation and the Three.js/.glb face model entirely — both run continuous per-frame
+// work that competes with the scroll thread and is the main cause of scroll jank/stutter.
+const IS_MOBILE = window.matchMedia('(max-width: 800px)').matches || window.matchMedia('(pointer: coarse)').matches;
 
 /* ============ Nav toggle ============ */
 const navToggle = document.getElementById('navToggle');
@@ -437,52 +466,57 @@ const navList = document.getElementById('navList');
 navToggle.addEventListener('click', () => navList.classList.toggle('open'));
 navList.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navList.classList.remove('open')));
 
-/* ============ Hero constellation canvas ============ */
-const canvas = document.getElementById('hero-canvas');
-const ctx = canvas.getContext('2d');
-let W,H,nodes=[];
-function resize(){
-  W = canvas.width = canvas.offsetWidth;
-  H = canvas.height = canvas.offsetHeight;
-}
-function initNodes(){
-  nodes = [];
-  const count = Math.min(90, Math.floor((W*H)/26000));
-  for(let i=0;i<count;i++){
-    nodes.push({
-      x: Math.random()*W, y: Math.random()*H,
-      vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.25,
-      r: Math.random()*1.6+0.6
-    });
+/* ============ Hero constellation canvas (desktop only) ============ */
+// This does an O(n^2) distance check between up to 90 nodes on every single frame, forever.
+// That's fine on a desktop GPU/CPU but it's a real battery/jank cost on phones, so on mobile
+// we skip creating it altogether (CSS above hides the canvas and shows a static glow instead).
+if(!IS_MOBILE){
+  const canvas = document.getElementById('hero-canvas');
+  const ctx = canvas.getContext('2d');
+  let W,H,nodes=[];
+  function resize(){
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
   }
-}
-function tick(){
-  ctx.clearRect(0,0,W,H);
-  ctx.strokeStyle = 'rgba(94,234,212,0.12)';
-  ctx.lineWidth = 1;
-  for(let i=0;i<nodes.length;i++){
-    const a = nodes[i];
-    a.x += a.vx; a.y += a.vy;
-    if(a.x<0||a.x>W) a.vx*=-1;
-    if(a.y<0||a.y>H) a.vy*=-1;
-    for(let j=i+1;j<nodes.length;j++){
-      const b = nodes[j];
-      const d = Math.hypot(a.x-b.x, a.y-b.y);
-      if(d < 130){
-        ctx.globalAlpha = 1 - d/130;
-        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-      }
+  function initNodes(){
+    nodes = [];
+    const count = Math.min(90, Math.floor((W*H)/26000));
+    for(let i=0;i<count;i++){
+      nodes.push({
+        x: Math.random()*W, y: Math.random()*H,
+        vx:(Math.random()-0.5)*0.25, vy:(Math.random()-0.5)*0.25,
+        r: Math.random()*1.6+0.6
+      });
     }
   }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = 'rgba(94,234,212,0.55)';
-  nodes.forEach(n => { ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); });
-  requestAnimationFrame(tick);
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle = 'rgba(94,234,212,0.12)';
+    ctx.lineWidth = 1;
+    for(let i=0;i<nodes.length;i++){
+      const a = nodes[i];
+      a.x += a.vx; a.y += a.vy;
+      if(a.x<0||a.x>W) a.vx*=-1;
+      if(a.y<0||a.y>H) a.vy*=-1;
+      for(let j=i+1;j<nodes.length;j++){
+        const b = nodes[j];
+        const d = Math.hypot(a.x-b.x, a.y-b.y);
+        if(d < 130){
+          ctx.globalAlpha = 1 - d/130;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(94,234,212,0.55)';
+    nodes.forEach(n => { ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); });
+    requestAnimationFrame(tick);
+  }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.addEventListener('resize', () => { resize(); initNodes(); });
+  resize(); initNodes();
+  if(!reduceMotion) tick(); else tick(); // draw once even w/ reduced motion (single frame acceptable)
 }
-const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-window.addEventListener('resize', () => { resize(); initNodes(); });
-resize(); initNodes();
-if(!reduceMotion) tick(); else tick(); // draw once even w/ reduced motion (single frame acceptable)
 
 /* ============ Skill card reveal ============ */
 const io = new IntersectionObserver((entries)=>{
@@ -742,16 +776,49 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   }
 });
 
-/* ============ 3D Face — follows mouse on desktop, scroll on mobile ============ */
+/* ============ 3D Face — desktop: Three.js model that follows the mouse. Mobile: static image ============ */
 (function initFace(){
   const wrap = document.getElementById('faceWrap');
   const canvas = document.getElementById('faceCanvas');
-  const isCoarse = window.matchMedia('(pointer: coarse)').matches || window.innerWidth <= 800;
+  const mobileImg = document.getElementById('faceImgMobile');
+
+  if(IS_MOBILE){
+    // On mobile we skip Three.js and the .glb model entirely — no ~600KB library download,
+    // no WebGL context, no continuous requestAnimationFrame render loop. We also drop the old
+    // scroll-linked tilt effect, which called getBoundingClientRect() on every scroll event and
+    // forced a synchronous layout recalculation — a classic cause of scroll stutter on phones.
+    // Just show a plain image (falls back to the same friendly placeholder if it's missing).
+    mobileImg.addEventListener('error', () => {
+      wrap.innerHTML = `<div class="face-fallback">🙂<span>Add assets/face-mobile.jpg to show a photo or render here.</span></div>`;
+    }, { once:true });
+    return;
+  }
+
   const reduceMotion2 = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Path to your exported model. Put the file at this location relative to index.html.
   const MODEL_PATH = 'assets/face.glb';
 
+  function showFallback(msg){
+    wrap.innerHTML = `<div class="face-fallback">🙂<span>${msg || 'Add your face.glb to /assets to show your 3D model here.'}</span></div>`;
+  }
+
+  function loadScript(src){
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Load Three.js + GLTFLoader lazily (desktop only) instead of via static <script> tags,
+  // so mobile visitors never download or parse this library at all.
+  Promise.all([
+    loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
+    loadScript('https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js')
+  ]).then(startFace).catch(() => showFallback('3D engine failed to load.'));
+
+  function startFace(){
   if(typeof THREE === 'undefined'){ showFallback('3D engine failed to load.'); return; }
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha:true, antialias:true });
@@ -787,10 +854,6 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   }
   window.addEventListener('resize', sizeCanvas);
 
-  function showFallback(msg){
-    wrap.innerHTML = `<div class="face-fallback">🙂<span>${msg || 'Add your face.glb to /assets to show your 3D model here.'}</span></div>`;
-  }
-
   const loader = new THREE.GLTFLoader();
   loader.load(
     MODEL_PATH,
@@ -822,27 +885,17 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     renderer.render(scene, camera);
   }
 
-  if(!isCoarse){
-    // Desktop: face yaw follows horizontal mouse position, pitch follows vertical
-    window.addEventListener('mousemove', (e) => {
-      const nx = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) .. 1 (right)
-      const ny = (e.clientY / window.innerHeight) * 2 - 1;  // -1 (top) .. 1 (bottom)
-      targetX = nx * MAX_YAW;
-      targetY = ny * MAX_PITCH;
-    });
-  } else {
-    // Mobile: no reliable mouse — tilt the face up/down as the hero section scrolls past
-    const heroEl = document.getElementById('hero');
-    window.addEventListener('scroll', () => {
-      const rect = heroEl.getBoundingClientRect();
-      const progress = Math.min(Math.max(-rect.top / (rect.height * 0.6), -1), 1);
-      targetY = progress * MAX_PITCH * 2.0;
-      targetX = 0;
-    }, { passive:true });
-  }
+  // Desktop only here: face yaw follows horizontal mouse position, pitch follows vertical
+  window.addEventListener('mousemove', (e) => {
+    const nx = (e.clientX / window.innerWidth) * 2 - 1;   // -1 (left) .. 1 (right)
+    const ny = (e.clientY / window.innerHeight) * 2 - 1;  // -1 (top) .. 1 (bottom)
+    targetX = nx * MAX_YAW;
+    targetY = ny * MAX_PITCH;
+  });
 
   if(reduceMotion2){ targetX = 0; targetY = 0; }
   sizeCanvas();
+  } // end startFace
 })();
 </script>
 </body>

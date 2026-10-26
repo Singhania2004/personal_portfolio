@@ -814,17 +814,34 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   function loadScript(src){
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = src; s.onload = resolve; s.onerror = reject;
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => { s.remove(); reject(new Error('Failed to load ' + src)); };
       document.head.appendChild(s);
     });
   }
 
-  // Load Three.js + GLTFLoader lazily (desktop only) instead of via static <script> tags,
-  // so mobile visitors never download or parse this library at all.
-  Promise.all([
-    loadScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'),
-    loadScript('https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js')
-  ]).then(startFace).catch(() => showFallback('3D engine failed to load.'));
+  // Try each URL in order until one loads (CDN fallback).
+  function loadFirst(urls){
+    return urls.reduce((p, url) => p.catch(() => loadScript(url)), Promise.reject());
+  }
+
+  // Load Three.js FIRST, then GLTFLoader. GLTFLoader needs the global THREE to exist when it
+  // runs; loading them in parallel was a race that failed whenever GLTFLoader arrived first.
+  // Each file tries cdnjs first, then jsDelivr as a fallback.
+  loadFirst([
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'
+  ])
+  .then(() => loadFirst([
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js'
+  ]))
+  .then(() => {
+    try { startFace(); }
+    catch(err){ console.error('Face init error:', err); showFallback('3D view could not start.'); }
+  })
+  .catch(err => { console.error(err); showFallback('3D engine failed to load.'); });
 
   function startFace(){
   if(typeof THREE === 'undefined'){ showFallback('3D engine failed to load.'); return; }
